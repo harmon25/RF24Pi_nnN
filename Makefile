@@ -8,7 +8,7 @@
 #
 # Description:
 # ------------
-# use make all and make install to install the examples
+# use make all and make install to install
 # You can change the install directory by editing the prefix line
 #
 prefix := /usr/local
@@ -30,8 +30,6 @@ ifeq "$(RPI)" "1"
 CCFLAGS=-Ofast -mfpu=vfp -mfloat-abi=hard -march=$(ARCH) -mtune=arm1176jzf-s -std=c++0x
 endif
 
-MSGPAKFLAGS=-DMSGPACK_DISABLE_LEGACY_NIL -DMSGPACK_DISABLE_LEGACY_CONVERT
-
 # define all programs
 PROGRAMS = RF24d
 SOURCES = ${PROGRAMS:=.cpp}
@@ -39,7 +37,7 @@ SOURCES = ${PROGRAMS:=.cpp}
 all: ${PROGRAMS}
 
 ${PROGRAMS}: ${SOURCES}
-	g++ ${CCFLAGS} -Wall -lnanomsg -lrf24-bcm -lrf24network -lrf24mesh lib/jsoncpp.cpp $@.cpp -o bin/$@
+	g++ ${CCFLAGS} -Wall -lnanomsg -lrf24-bcm -lrf24network -lrf24mesh lib/jsoncpp.cpp src/$@.cpp -o $@
 
 clean:
 	rm -rf $(PROGRAMS)

@@ -1,5 +1,5 @@
 # RF24Pi nanomsg Network
-A NRF24L01+ sensor network relay built with [nanomsg](http://nanomsg.org/) and [RF24Network](https://tmrh20.github.io/RF24Network/).
+A NRF24L01+ sensor network relay built with [nanomsg](http://nanomsg.org/) and [RF24Network](https://tmrh20.github.io/RF24Network/) in C++.
 
 - For relaying messages to and from a NRF24L01+ sensor network using [RF24Network](https://tmrh20.github.io/RF24Network/)
 - Utilizes JSON for message serialization
