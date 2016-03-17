@@ -37,7 +37,7 @@ SOURCES = ${PROGRAMS:=.cpp}
 all: ${PROGRAMS}
 
 ${PROGRAMS}: ${SOURCES}
-	g++ ${CCFLAGS} -Wall -lnanomsg -lrf24-bcm -lrf24network -lrf24mesh lib/jsoncpp.cpp src/$@.cpp -o $@
+	g++ ${CCFLAGS} -Wall -lnanomsg -lrf24-bcm -lrf24network -lrf24mesh ../lib/jsoncpp.cpp $@.cpp -o $@
 
 clean:
 	rm -rf $(PROGRAMS)
