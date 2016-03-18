@@ -46,8 +46,10 @@ static void show_usage(string name)
 }
 
 void signalHandler( int );
-void logMsg(string = "error", string = "", string = ""); 
+void logMsg(string = "", string = "", string = "error"); 
 void Rf24d(uint16_t, uint8_t , rf24_datarate_e, rf24_pa_dbm_e );
+int sendBackErr(int nn_socket, string error_for_ex, Json::Value failed_msg);
+
 
 int main(int argc, char *argv[])
 {
@@ -199,24 +201,27 @@ void Rf24d(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate, rf2
       Json::Value jsonMessage;
       if (reader.parse(rawjsonMsg, jsonMessage)){
         int msgType = jsonMessage.get("type", 1).asInt();
-        uint16_t to_node_id = jsonMessage.get("node_id", 012).asInt();
-        if(network.is_valid_address(to_node_id)){
+        string to_node_id_str = jsonMessage.get("node_id", "01").asString();
+        uint16_t to_node_id_oct;
+        std::istringstream(to_node_id_str) >> std::oct >> to_node_id_oct; // make sure node id is octal, sent as string 
+        if(network.is_valid_address(to_node_id_oct)){
           string strMsg = jsonMessage.get("msg", "ok").asString();
           payload_json payload;
           strcpy(payload.msg, strMsg.data());
-          RF24NetworkHeader header(/*to node*/ to_node_id , /*msg type, 0-255 */ (unsigned char)msgType); //create RF24Network header
+          RF24NetworkHeader header(/*to node*/ to_node_id_oct , /*msg type, 0-255 */ (unsigned char)msgType); //create RF24Network header
           if (network.write(header,&payload,sizeof(payload))){
-            logMsg("sent_to_node", to_string(msgType), to_string(to_node_id));
+            logMsg(to_string(msgType), to_node_id_str, "sent_to_node");
           } else { 
             //err
-            logMsg("failed_to_node", to_string(to_node_id));
+            sendBackErr(s,"failed_to_node", jsonMessage );
+            logMsg("failed_to_node", to_node_id_str);
           }      
         } else {
-          //err
-          logMsg("invalid_rf24_addr", to_string(to_node_id));
+          sendBackErr(s,"invalid_rf24_addr", jsonMessage );
+          logMsg("invalid_rf24_addr", to_node_id_str);
         }  
       } else {
-        //err
+         sendBackErr(s,"invalid_nn_msg_json", jsonMessage);
          logMsg("invalid_nn_msg_json", rawjsonMsg);
       }      
     }
@@ -242,7 +247,7 @@ void Rf24d(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate, rf2
         string str_for_elixir = fastWriter.write(jsonRFM); // write json into string
         int nbytesent = nn_send(s, str_for_elixir.c_str(), str_for_elixir.size(), NN_DONTWAIT);
         // log
-        logMsg("sent_bytes", "elixir", to_string(nbytesent) );
+        logMsg("elixir", to_string(nbytesent), "sent_bytes");
       } else {
         //err
         logMsg("parse_arduino_msg", errs);
@@ -252,11 +257,22 @@ void Rf24d(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate, rf2
   } // restart loop
 } 
 
-void logMsg(string type, string info, string msg ){
+void logMsg(string info, string msg, string type){
   Json::Value log_msg;
   log_msg["type"] = type;
   log_msg["info"] = info;
   log_msg["msg"] = msg;
   string log_str = fastWriter.write(log_msg);
   syslog (LOG_NOTICE, log_str.c_str());
+}
+
+
+
+int sendBackErr(int nn_socket, string error_for_ex, Json::Value failed_msg)
+{
+  Json::Value jsonErrMessage;
+  jsonErrMessage["error"] = error_for_ex;
+  jsonErrMessage["details"] = failed_msg;
+  string err_for_elixir = fastWriter.write(jsonErrMessage); // write json into string
+  return nn_send(nn_socket, err_for_elixir.c_str(), err_for_elixir.size(), NN_DONTWAIT);
 }
