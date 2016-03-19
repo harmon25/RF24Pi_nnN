@@ -59,24 +59,24 @@ void Rf24Relay(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate,
         if(network.is_valid_address(to_node_id_oct)){
           string msgPayload(nn_in_msg["msg"].GetString());      //grab payload put it in a string
           unsigned char msg_type = nn_in_msg["type"].GetInt();  // grap message type as unsigned char 
-          char payload[24]; // 
+          char payload[144]; // default payload size when fragmented over 5 packets
           strcpy(payload, msgPayload.data());
           RF24NetworkHeader header(/*to node*/ to_node_id_oct , /*msg type, 0-255 */ msg_type ); //create RF24Network header
           if (network.write(header,&payload, sizeof(payload))) {
             logMsg(to_string(msg_type), to_string(to_node_id_oct), "sent_to_node");
           } else { 
             gotErr = 1;
-            errMsg << "failed_to_node ";
+            errMsg << "FAILED_TO_NODE: " << to_node_id_oct;
             logMsg("failed_to_node", to_string(to_node_id_oct));
           }      
         } else {
           gotErr = 1;
-          errMsg << "invalid_rf24_addr ";
+          errMsg << "INVALID_RF24_ADDR " << to_node_id_oct;
           logMsg(errMsg.str(), to_string(to_node_id_oct));
         }  
       } else {
         gotErr = 1;
-        errMsg << "RAPID_JSON_PARSE_ERROR ";
+        errMsg << "RAPID_JSON_PARSE_ERROR: " << msg_str;
         logMsg(errMsg.str(), msg_str);
       }      
     
@@ -93,9 +93,10 @@ void Rf24Relay(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate,
       Document in_rf_msg;       // create document for incoming message
       in_rf_msg.SetObject();  
       Document::AllocatorType& allocator = in_rf_msg.GetAllocator();  // grab allocator
-      char payloadJ[24]; // make 24byte char to store payload
+      char payloadJ[144]; // make 24byte char to store payload - could be fragment
       network.read(header,&payloadJ, sizeof(payloadJ));
       string payloadStr(payloadJ); // create string object to strip nonsense off buffer
+      in_rf_msg.AddMember("msg_id", Value().SetInt(header.id) , allocator); 
       in_rf_msg.AddMember("from_node", Value().SetInt(header.from_node) , allocator); // add integer to incoming msg json: from_node
       in_rf_msg.AddMember("type", Value().SetInt(header.type), allocator);            // add integer to incoming msg json: type 
       in_rf_msg.AddMember("msg", Value(payloadStr.c_str(), payloadStr.size(), allocator).Move(), allocator);
@@ -107,7 +108,7 @@ void Rf24Relay(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate,
           logMsg("sent", buffer.GetString(), "to_elixir");
         }
     } 
-    delay(150);
+    delay(5);
   } // restart loop
 } 
 
