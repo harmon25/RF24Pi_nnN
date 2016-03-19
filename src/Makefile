@@ -37,7 +37,7 @@ SOURCES = ${PROGRAMS:=.cpp}
 all: ${PROGRAMS}
 
 ${PROGRAMS}: ${SOURCES}
-	g++ ${CCFLAGS} -Wall -lnanomsg -lrf24-bcm -lrf24network -lrf24mesh ../lib/jsoncpp.cpp $@.cpp -o $@
+	g++ ${CCFLAGS} -Wall -lnnxx -lrf24-bcm -lrf24network -I/root/libs/rapidjson/include RF24Relay.cpp $@.cpp -o $@
 
 clean:
 	rm -rf $(PROGRAMS)
