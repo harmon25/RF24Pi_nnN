@@ -9,6 +9,7 @@ static void show_usage(string name)
     cerr << "Usage: " << name << " <option(s)>\n"
               << "Options:\n"
               << "\t-h,--help - Show this help message\n"
+              << "\t-d,--deamon - daemonize, logs to syslog\n"
               << "\t-i,--id NODEID - Set Node ID - Parsed as octal: 00\n"
               << "\t-c,--channel CHANNEL# - Set RF24 Channel - 1-255: 115\n"
               << "\t-r,--rate RATE - Set Data Rate [0-2] - 1_MBPS|2_MBPS|250KBPS: 0\n"
@@ -21,12 +22,13 @@ int main(int argc, char *argv[])
  
   //variables to store cmdline params
   string this_node_id_arg;
+  int daemonFlag = 0;
   int channel_arg = -1;
   int dataRate_arg = -1;
   int paLevel_arg = -1;
   
   int option_char = 0;
-  while ((option_char = getopt(argc, argv,"i:c:p:r:")) != -1) {
+  while ((option_char = getopt(argc, argv,"i:c:p:r:d")) != -1) {
     switch (option_char)
       {  
          case 'i': this_node_id_arg = optarg;
@@ -37,11 +39,14 @@ int main(int argc, char *argv[])
                    break;
          case 'r': dataRate_arg = atoi (optarg);
                    break;
+        case 'd': daemonFlag++;
+                   break;
          default: show_usage(argv[0]);
                   return 0;
       }
   }
-  
+
+ 
   uint16_t this_node_id_oct = 00;
   // set non-default nodeId
   if(this_node_id_arg.size() > 0){
@@ -71,37 +76,37 @@ int main(int argc, char *argv[])
 
   setlogmask(LOG_UPTO(LOG_NOTICE));
   openlog(DAEMON_NAME, LOG_CONS | LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_USER);
-  
-  // pid_t pid, sid;
-   //Fork the Parent Process
-  // pid = fork();
 
-   // if (pid < 0) { exit(EXIT_FAILURE); }
+  if(daemonFlag){
+    pid_t pid, sid;
+     //Fork the Parent Process
+    pid = fork();
 
-    //We got a good pid, Close the Parent Process
-  //  if (pid > 0) { exit(EXIT_SUCCESS); }
+     if (pid < 0) { exit(EXIT_FAILURE); }
+
+      //We got a good pid, Close the Parent Process
+     if (pid > 0) { exit(EXIT_SUCCESS); }
 
     //Change File Mask
-  //  umask(0);
+      umask(0);
 
-    //Create a new Signature Id for our child
-  //  sid = setsid();
- //   if (sid < 0) { exit(EXIT_FAILURE); }
+      //Create a new Signature Id for our child
+    sid = setsid();
+    if (sid < 0) { exit(EXIT_FAILURE); }
 
-    //Change Directory
-    //If we cant find the directory we exit with failure.
-  //  if ((chdir("/")) < 0) { exit(EXIT_FAILURE); }
+      //Change Directory
+      //If we cant find the directory we exit with failure.
+     if ((chdir("/")) < 0) { exit(EXIT_FAILURE); }
 
-    //Close Standard File Descriptors
-  //  close(STDIN_FILENO);
- //   close(STDOUT_FILENO);
- //   close(STDERR_FILENO);
+      //Close Standard File Descriptors
+      close(STDIN_FILENO);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
 
     //logMsg("fork", "process_forked" , to_string(pid));
+  } 
+ 
   
     // start loop
     Rf24Relay(this_node_id_oct, channel, dataRate, paLevel);
 }
-
-
-

@@ -16,9 +16,8 @@
   #include <RF24/RF24.h>
   #include <RF24Network/RF24Network.h>
   
-
-  #include <syslog.h>
   #include <csignal>
+  #include <syslog.h>
   #include <errno.h>
   #include <stdio.h>
   #include <stdlib.h>
@@ -27,7 +26,7 @@
 
   void Rf24Relay(uint16_t, uint8_t , rf24_datarate_e, rf24_pa_dbm_e );
   void logMsg(std::string = "", std::string = "", std::string = "error"); 
-  //void sendBackErr(int &nn_socket, std::string , std::string);
-  void signalHandler( int );
+  void sendBackErr(nnxx::socket &, std::string);
+  void signalHandler( int signum );
 
 #endif 

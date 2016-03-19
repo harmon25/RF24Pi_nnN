@@ -7,9 +7,8 @@ int nn_sock;
 
 void Rf24Relay(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate, rf24_pa_dbm_e paLevel )
 {
-  // register signal handler
-  signal(SIGTERM, signalHandler);
-  // Address of our node in Octal format (01,021, etc)
+   signal(SIGTERM, signalHandler);
+   // Address of our node in Octal format (01,021, etc)
   string ipc_addr = "ipc:///tmp/rf24d.ipc";
   // can only recieve max 24 bytes from RF24Network, so cap payloadmsg size at that
 
@@ -82,8 +81,7 @@ void Rf24Relay(uint16_t this_node_id, uint8_t channel, rf24_datarate_e dataRate,
       }      
     
       if(gotErr > 0){
-        cout << errMsg << endl;
-        //sendBackErr(nn_sock, errMsg, nn_in_msg);
+        sendBackErr(nn_sock, errMsg.str());
       }
     }
     
@@ -130,24 +128,22 @@ void logMsg(string info, string msg, string type){
   syslog (LOG_NOTICE, buffer.GetString());
 }
 
-/*
-void sendBackErr(int &nn_socket, string error_for_ex, rapidjson::Document &failed_msg)
+void sendBackErr(nnxx::socket &to, string error_for_ex)
 {
   Document nn_out_err;
   nn_out_err.SetObject();
-  nn_out_err.AddMember("error", error_for_ex, nn_out_err.GetAllocator());
-  nn_out_err.AddMember("details", failed_msg, nn_out_err.GetAllocator());
+  Document::AllocatorType& allocator = nn_out_err.GetAllocator();
+  nn_out_err.AddMember("error",Value(error_for_ex.c_str(), error_for_ex.size(), allocator).Move(), allocator);
   StringBuffer out_s_buf;
   Writer<StringBuffer> writer(out_s_buf);
   nn_out_err.Accept(writer);
-  nn_send(nn_socket, out_s_buf.GetString() , sizeof(out_s_buf.GetString()), NN_DONTWAIT);
+  to.send(out_s_buf.GetString(), nnxx::DONTWAIT);
 }
-*/
+
 
 void signalHandler( int signum )
 {
-    syslog (LOG_NOTICE, "Closing RF24d@");
-
+    syslog (LOG_NOTICE, "Closing RF24d!");
     closelog ();
     exit(signum);  
 }
