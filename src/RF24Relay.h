@@ -26,6 +26,8 @@
 
   void Rf24Relay(uint16_t, uint8_t , rf24_datarate_e, rf24_pa_dbm_e );
   void logMsg(std::string = "", std::string = "", std::string = "error"); 
+  void handleIncomingRF24Msg(nnxx::socket &, RF24Network &);
+  void handleIncomingNNMsg(nnxx::socket &, RF24Network &);
   void sendBackErr(nnxx::socket &, std::string);
   void signalHandler( int signum );
 

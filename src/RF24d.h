@@ -18,9 +18,6 @@
   #include <errno.h>
   #include <getopt.h>
 
-
   #define DAEMON_NAME "RF24d"
-
-
 
  #endif
